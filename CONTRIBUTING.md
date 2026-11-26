@@ -53,10 +53,9 @@ note under `examples/` or `docs/` instead.
 
 ## Release
 
-Maintainers use Changesets. The `version` workflow opens a version PR; after it
-merges, push a `vX.Y.Z` tag and let the `release` workflow publish with npm
-provenance. The repository must have an `NPM_TOKEN` secret with publish access
-to the `@simon_he` scope. A published release must build from a clean checkout.
+Maintainers use Changesets. See [the releasing guide](docs/releasing.md) for the
+version PR, tag and `NPM_TOKEN` setup. A published release must build from a
+clean checkout.
 
 ## Questions
 

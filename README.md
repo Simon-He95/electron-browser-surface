@@ -170,6 +170,7 @@ The package is also a natural fit for:
 - [Integration guide](docs/integration.md)
 - [Demo guide](docs/demo.md)
 - [Contributing](CONTRIBUTING.md)
+- [Releasing](docs/releasing.md)
 - [Security](SECURITY.md)
 
 ## Status and compatibility
