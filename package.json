@@ -1,0 +1,95 @@
+{
+  "name": "@simon_he/electron-browser-surface",
+  "version": "0.1.0",
+  "description": "Host-neutral CDP browser automation and a WebContentsView surface for Electron.",
+  "keywords": [
+    "electron",
+    "webcontentsview",
+    "browser-automation",
+    "cdp",
+    "accessibility",
+    "agent"
+  ],
+  "license": "MIT",
+  "author": "Simon He",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Simon-He95/electron-browser-surface.git"
+  },
+  "homepage": "https://github.com/Simon-He95/electron-browser-surface#readme",
+  "bugs": {
+    "url": "https://github.com/Simon-He95/electron-browser-surface/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@10.34.9",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./electron": {
+      "types": "./dist/electron/index.d.ts",
+      "import": "./dist/electron/index.js",
+      "require": "./dist/electron/index.cjs"
+    },
+    "./refresh": {
+      "types": "./dist/refresh/index.d.ts",
+      "import": "./dist/refresh/index.js",
+      "require": "./dist/refresh/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "docs",
+    "examples"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "demo": "pnpm build && electron examples/electron/main.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "docs:api": "typedoc --out docs/api src/index.ts src/electron/index.ts src/refresh/index.ts",
+    "commitlint": "commitlint --from HEAD~1 --to HEAD",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "pnpm build && changeset publish",
+    "pack": "pnpm build && pnpm pack"
+  },
+  "peerDependencies": {
+    "electron": ">=30.0.0"
+  },
+  "peerDependenciesMeta": {
+    "electron": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.31.0",
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "@types/node": "^24.0.0",
+    "electron": "43.6.0",
+    "tsup": "^8.5.0",
+    "typedoc": "^0.28.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.8"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}
