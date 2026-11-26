@@ -63,6 +63,8 @@ dialog, popover or menu is drawn over that area.
   `evaluateExpression`, `waitForCondition`
 - `buildSnapshot` / `RefMap` from a CDP `Accessibility.getFullAXTree` result
 - `BrowserEventBuffers`
+- `ViewportEmulationGuard` to clear agent `cdp` viewport overrides before the
+  user sees the shared page
 - typed errors such as `BrowserRefStaleError` and `BrowserCdpError`
 - `BrowserRuntime`, `BrowserPageState` and `BrowserSnapshot` contracts
 - secure `BROWSER_SECURE_WEB_PREFERENCES`
@@ -91,7 +93,7 @@ The package owns the policy and the safe CSS replacement primitive.
 ## Lifecycle
 
 ```text
-create surface (hidden)
+create surface (hidden, 1280x800 until the first host rect)
   → host measures rect
   → setBounds + setVisible(true)
   → navigate / load
@@ -108,6 +110,18 @@ Read [the lifecycle guide](docs/lifecycle.md) for focus, visibility, crashes
 and multi-window ownership. The surface adapter intentionally does not know
 your DOM overlay structure; the host must report the visible page rect and
 hide the native view when a host overlay intersects it.
+
+### Agent viewport emulation
+
+The raw `cdp` escape hatch can change the page viewport with
+`Emulation.setDeviceMetricsOverride` or `Emulation.setPageScaleFactor`. The
+page is shared with the user's surface, so those overrides must not outlive the
+agent run: an emulated 1440px layout viewport inside a 900px native view is
+clipped with no horizontal overflow to scroll. Use `ViewportEmulationGuard` to
+track successful `cdp` calls, keep the override while the run is active, and
+clear it at run end or when a user-visible surface appears outside a run.
+Serialize the clear behind in-flight browser operations. See
+[the integration guide](docs/integration.md#2-implement-a-cdp-transport).
 
 ## Refresh: on demand, not “everything reload”
 

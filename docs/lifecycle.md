@@ -4,7 +4,7 @@
 
 ```text
 createBrowserSurface
-        │ view hidden, zero bounds
+        │ view hidden, 1280x800 until the first host rect
         ▼
 host measures the page area
         │ clipRectToWindowContent
@@ -26,6 +26,15 @@ The adapter is deliberately small. It does **not** create a session store,
 enforce capacity, decide which window owns a page, or inspect host DOM. Those
 belong to the application.
 
+## Initial viewport
+
+A never-shown surface starts at `1280 × 800` CSS pixels instead of `0 × 0`.
+CDP snapshot, eval, click, fill, press, scroll and screenshot can run while the
+host panel is closed; a zero-sized view would make every document measure zero.
+The first `setBounds` from the host replaces these temporary bounds. An existing
+page keeps its last bounds when the host hides it, so hidden work still sees a
+positive viewport.
+
 ## Visibility
 
 Native views are above renderer DOM and are not clipped by CSS `overflow` or
@@ -44,6 +53,42 @@ overlay is actually over it.
 `clipRectToWindowContent` only prevents a rect from exceeding the window content
 area. The host still has to clip the rect to its own panel/container if it can
 animate or scroll.
+
+## Agent viewport emulation
+
+The page is shared by the user and the agent. The raw `cdp` escape hatch can
+set a layout viewport that does not match the native view:
+
+- `Emulation.setDeviceMetricsOverride` makes the page lay out at, for example,
+  1440px while the native view is only as wide as the host panel;
+- the page considers 1440px its own viewport, so `scrollWidth === clientWidth`
+  and it has no horizontal overflow to scroll;
+- the native view clips the right side, which the user cannot reach.
+
+Use `ViewportEmulationGuard` from the root entry:
+
+```ts
+const guard = new ViewportEmulationGuard();
+
+const send = async (method, params) => {
+  const result = await rawSend(method, params);
+  guard.track(method);
+  return result;
+};
+
+// Keep the override while the agent run is active.
+// At run end, or when a user-visible surface appears outside a run:
+await runInBrowserOperationQueue(() => guard.clear(send, console.warn));
+// runInBrowserOperationQueue is the host's own browser-operation queue.
+// When the page/debugger is detached or rebound:
+guard.reset();
+```
+
+The clear must be serialized behind in-flight browser operations; otherwise a
+concurrent `Emulation.setDeviceMetricsOverride` can finish after the reset and
+re-emulate the page. Do not clear while an agent run is still using the
+emulated viewport merely because the host opened a panel or a transient overlay
+changed surface visibility.
 
 ## Focus
 
