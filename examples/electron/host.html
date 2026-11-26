@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>electron-browser-surface demo</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; background: #101722; color: #dbe5f7; }
+      body { display: grid; grid-template-rows: 48px 1fr; }
+      header { display: flex; align-items: center; gap: 8px; padding: 0 16px; border-bottom: 1px solid #2b3a50; background: #151f2e; }
+      header strong { margin-right: 12px; }
+      button, input { font: inherit; }
+      button { padding: 6px 10px; border: 1px solid #3a4b64; border-radius: 6px; background: #1d2a3d; color: inherit; cursor: pointer; }
+      button:hover { background: #263852; }
+      input { flex: 1; min-width: 120px; padding: 6px 8px; border: 1px solid #3a4b64; border-radius: 6px; background: #0d1420; color: inherit; }
+      main { display: grid; grid-template-columns: 260px 1fr; min-height: 0; }
+      aside { padding: 14px; border-right: 1px solid #2b3a50; overflow: auto; background: #121b29; }
+      aside h2 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: #8fa4c2; }
+      #log { white-space: pre-wrap; font: 12px/1.5 ui-monospace, SFMono-Regular, monospace; color: #b9c9df; }
+      #stage { position: relative; min-width: 0; min-height: 0; padding: 16px; }
+      #surface { position: absolute; inset: 16px; border: 1px dashed #3f5675; border-radius: 10px; overflow: hidden; }
+      #surface-label { position: absolute; inset: 0; display: grid; place-items: center; color: #7b90ae; pointer-events: none; }
+      #overlay { position: absolute; inset: 16px; display: none; place-items: center; border-radius: 10px; background: #19263a; z-index: 2; }
+      #overlay.open { display: grid; }
+      #overlay .card { max-width: 360px; padding: 20px; border: 1px solid #3b5273; border-radius: 12px; background: #213149; }
+      #overlay p { color: #b9c9df; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <strong>electron-browser-surface</strong>
+      <input id="url" value="file:///tmp/__DEMO_HTML__" spellcheck="false">
+      <button id="go">Navigate</button>
+      <button id="agent">Run scripted agent</button>
+      <button id="css">Update CSS</button>
+      <button id="reload">Reload</button>
+      <button id="overlay-button">Host overlay</button>
+    </header>
+    <main>
+      <aside>
+        <h2>Demo log</h2>
+        <div id="log">Starting native surface…</div>
+      </aside>
+      <section id="stage">
+        <div id="surface">
+          <div id="surface-label">The native WebContentsView is drawn above this host element.</div>
+        </div>
+        <div id="overlay">
+          <div class="card">
+            <h2>Host overlay is open</h2>
+            <p>The host asked the adapter to hide the native view, so this DOM overlay is visible. Close it to restore the page.</p>
+            <button id="close-overlay">Close overlay</button>
+          </div>
+        </div>
+      </section>
+    </main>
+    <script>
+      const log = (message) => {
+        const node = document.getElementById('log');
+        node.textContent += `\n${message}`;
+        node.scrollTop = node.scrollHeight;
+      };
+      const surface = document.getElementById('surface');
+      const reportSurface = () => {
+        const rect = surface.getBoundingClientRect();
+        window.demo.sendSurface({ x: rect.left, y: rect.top, width: rect.width, height: rect.height });
+      };
+      new ResizeObserver(reportSurface).observe(surface);
+      window.addEventListener('resize', reportSurface);
+      window.__reportSurface = reportSurface;
+      reportSurface();
+      window.demo.onLog((entry) => log(entry));
+      document.getElementById('go').addEventListener('click', async () => {
+        const url = document.getElementById('url').value.trim();
+        if (url) log(await window.demo.navigate(url));
+      });
+      document.getElementById('agent').addEventListener('click', async () => {
+        log(await window.demo.runAgent());
+      });
+      document.getElementById('css').addEventListener('click', async () => {
+        log(await window.demo.updateCss());
+      });
+      document.getElementById('reload').addEventListener('click', async () => {
+        log(await window.demo.reload());
+      });
+      document.getElementById('overlay-button').addEventListener('click', async () => {
+        const open = await window.demo.toggleOverlay();
+        document.getElementById('overlay').classList.toggle('open', open);
+        log(open ? 'Host overlay opened; native page hidden.' : 'Host overlay closed; native page restored.');
+      });
+      document.getElementById('close-overlay').addEventListener('click', async () => {
+        await window.demo.toggleOverlay();
+        document.getElementById('overlay').classList.remove('open');
+        log('Host overlay closed; native page restored.');
+      });
+    </script>
+  </body>
+</html>

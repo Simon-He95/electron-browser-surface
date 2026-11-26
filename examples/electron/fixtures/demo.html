@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Browser Surface Demo</title>
+    <link rel="stylesheet" href="./demo.css">
+  </head>
+  <body>
+    <main class="card">
+      <span class="badge">WebContentsView</span>
+      <h1>Browser Surface Demo</h1>
+      <p>This page is a normal <code>WebContents</code>. The demo host can drive it through CDP while the host renderer stays independent.</p>
+      <p>
+        <label for="email">Email</label>
+        <input id="email" autocomplete="off">
+      </p>
+      <button id="go" type="button">Go</button>
+      <pre id="state">waiting for an action</pre>
+    </main>
+    <div style="height:900px"></div>
+    <script>
+      window.__clicks = 0;
+      window.__events = [];
+      window.__keptMarker = 'kept';
+      window.__pageInstance ??= crypto.randomUUID();
+      const state = () => {
+        const value = {
+          clicks: window.__clicks,
+          email: document.getElementById('email').value,
+          scrollY: window.scrollY,
+          events: window.__events,
+        };
+        document.getElementById('state').textContent = JSON.stringify(value, null, 2);
+        return value;
+      };
+      document.getElementById('go').addEventListener('click', () => {
+        window.__clicks += 1;
+        state();
+      });
+      document.getElementById('email').addEventListener('input', (event) => {
+        window.__events.push(`input:${event.target.value}`);
+        state();
+      });
+      window.__state = state;
+      state();
+    </script>
+  </body>
+</html>
