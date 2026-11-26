@@ -26,9 +26,16 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
-      - run: pnpm publish --access public --provenance --no-git-checks
+      - name: Publish to npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          version=$(node -p "require('./package.json').version")
+          if npm view "@simon_he/electron-browser-surface@$version" version >/dev/null 2>&1; then
+            echo "Version $version already exists on npm; skipping publish."
+          else
+            pnpm publish --access public --provenance --no-git-checks
+          fi
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
