@@ -12,6 +12,7 @@ import {
   evaluateExpression,
   waitForCondition,
   BrowserEventBuffers,
+  ViewportEmulationGuard,
   BrowserError,
   BrowserOperationError,
   BrowserRefStaleError,
@@ -35,6 +36,34 @@ The host usually implements it with:
 ```ts
 const send = (method, params) => webContents.debugger.sendCommand(method, params);
 ```
+
+### Viewport emulation
+
+`ViewportEmulationGuard` tracks viewport-changing CDP overrides applied through
+the agent `cdp` escape hatch. A device-metrics override changes the page's
+layout viewport without creating horizontal overflow; the native view stays at
+the panel width, so the right side is clipped and cannot be scrolled.
+
+```ts
+const guard = new ViewportEmulationGuard();
+
+// After every successful raw CDP command:
+guard.track(method);
+
+// At agent run end, or when a user-visible surface appears outside a run:
+await guard.clear(send, ({ method, error }) => console.warn(method, error));
+
+// When the debugger is detached or the page is rebound:
+guard.reset();
+```
+
+`track()` recognizes `Emulation.setDeviceMetricsOverride`,
+`Emulation.clearDeviceMetricsOverride` and `Emulation.setPageScaleFactor`.
+`clear()` sends `Emulation.clearDeviceMetricsOverride` and
+`Emulation.setPageScaleFactor(1)` for the overrides that are still active. A
+failed command keeps its flag so a later call retries. Serialize `clear()`
+behind the host's in-flight browser operations; do not attach a debugger just
+to reset.
 
 ### Snapshot
 
@@ -101,6 +130,10 @@ surface.setVisible(true);
 surface.focus();
 await surface.destroy();
 ```
+
+`createBrowserSurface` starts hidden at `1280 × 800`; the first `setBounds`
+replaces that temporary viewport. This keeps hidden CDP snapshot/eval/screenshot
+from measuring a zero-sized document.
 
 `createBrowserSurface` does not focus the page. CDP input is delivered to its
 `webContents` without changing the host's OS focus. `focus()` is for deliberate

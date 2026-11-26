@@ -38,6 +38,14 @@ const normalizeRect = (rect: BrowserRect): BrowserRect => ({
 });
 
 /**
+ * A never-shown page still needs a positive layout viewport: CDP snapshot,
+ * eval and screenshot run while the host panel is hidden, and a 0×0 view makes
+ * every document measure 0. The first host surface report replaces these
+ * bounds.
+ */
+const INITIAL_BOUNDS: BrowserRect = { x: 0, y: 0, width: 1280, height: 800 };
+
+/**
  * Clip a renderer-space surface rect to the window content area.
  *
  * Native views are not clipped by CSS overflow; hosts should call this before
@@ -76,7 +84,7 @@ export function createBrowserSurface(options: BrowserSurfaceOptions): BrowserSur
     },
   });
   const contents = view.webContents;
-  view.setBounds(normalizeRect({ x: 0, y: 0, width: 0, height: 0 }));
+  view.setBounds(normalizeRect(INITIAL_BOUNDS));
   view.setVisible(options.visible ?? false);
   options.window.contentView.addChildView(view);
 

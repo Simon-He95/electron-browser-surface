@@ -15,8 +15,9 @@ const surface = createBrowserSurface({
 });
 ```
 
-The surface starts hidden at zero bounds. The renderer reports the page area;
-the host clips it and sets it visible:
+The surface starts hidden at `1280 × 800`, so CDP operations work before the
+host has measured the panel. The renderer reports the page area; the host clips
+it and sets it visible:
 
 ```ts
 const rect = clipRectToWindowContent(window, reportedRect);
@@ -29,13 +30,42 @@ if (rect) {
 ## 2. Implement a CDP transport
 
 ```ts
-function send<T = unknown>(method: string, params?: Record<string, unknown>) {
+import { ViewportEmulationGuard } from '@simon_he/electron-browser-surface';
+
+const viewport = new ViewportEmulationGuard();
+
+function rawSend<T = unknown>(method: string, params?: Record<string, unknown>) {
   return surface.webContents.debugger.sendCommand(method, params) as Promise<T>;
+}
+
+async function send<T = unknown>(method: string, params?: Record<string, unknown>) {
+  const result = await rawSend<T>(method, params);
+  viewport.track(method);
+  return result;
 }
 ```
 
 Attach the debugger once for the page lifetime, and detach on destroy. Keep it
 in the main process. Do not expose raw CDP to untrusted renderer content.
+
+`ViewportEmulationGuard` tracks `Emulation.setDeviceMetricsOverride` and
+`Emulation.setPageScaleFactor` applied through the agent's raw `cdp` escape
+hatch. Keep the override while the agent run is active. At run end, or when a
+user-visible surface appears outside a run, call:
+
+```ts
+await runInBrowserOperationQueue(() =>
+  viewport.clear(rawSend, ({ method, error }) => {
+    console.warn(`[browser] failed to clear ${method}`, error);
+  }),
+);
+```
+
+Use the host's serialized browser-operation queue so an in-flight
+`Emulation.setDeviceMetricsOverride` cannot re-apply the override after the
+reset. Call `viewport.reset()` when the page's debugger is detached or rebound.
+Do not clear the override merely because a panel opened or a transient host
+overlay changed surface visibility while the run is still active.
 
 ## 3. Implement `BrowserRuntime`
 

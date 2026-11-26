@@ -30,7 +30,7 @@ describe('Electron browser surface', () => {
       viewConstructor: MockView as never,
       partition: 'persist:test',
     });
-    expect(surface.view.setBounds).toHaveBeenLastCalledWith({ x: 0, y: 0, width: 0, height: 0 });
+    expect(surface.view.setBounds).toHaveBeenLastCalledWith({ x: 0, y: 0, width: 1280, height: 800 });
     surface.setBounds({ x: 10.4, y: 20.6, width: 300.2, height: 200.8 });
     expect(surface.view.setBounds).toHaveBeenLastCalledWith({ x: 10, y: 21, width: 300, height: 201 });
     surface.setVisible(true);
