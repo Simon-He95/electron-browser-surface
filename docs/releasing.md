@@ -3,57 +3,66 @@
 ## Prerequisites
 
 - an npm account with publish access to the `@simon_he` scope;
-- a granular npm token with read/write access to the package;
-- a GitHub repository secret named `NPM_TOKEN` containing that token;
-- the `version` and `release` workflows enabled.
+- a clean `main` working tree with the next `CHANGELOG.md` entry already
+  committed;
+- `npm login --registry=https://registry.npmjs.org` on the release machine.
 
-The token is read by CI only. Never commit it, print it in logs, or add it to a
-local `.npmrc` that is committed to the repository.
+The release script publishes from the local machine. The tag push still runs
+the GitHub `release` workflow, which skips the npm publish when the version
+already exists and creates the GitHub release.
 
 ## Flow
 
-1. Add a changeset in a feature PR:
+```bash
+git switch main
+git pull --ff-only origin main
+pnpm install --frozen-lockfile
 
-   ```bash
-   pnpm changeset
-   ```
+# Interactive version selection:
+pnpm release
 
-2. Merge to `main`. The `version` workflow opens a “version packages” PR.
-3. Merge the version PR. `package.json` and `CHANGELOG.md` now carry the next
-   version.
-4. Tag the merge commit and push the tag:
+# Or pin the version:
+pnpm release 0.2.0
+```
 
-   ```bash
-   git tag v0.1.0
-   git push origin v0.1.0
-   ```
+`pnpm release` runs [bumpp](https://github.com/antfu/bumpp) with:
 
-5. The `release` workflow installs, typechecks, tests, builds, publishes with
-   provenance and creates a GitHub release.
+1. bump `package.json` to the next version;
+2. `pnpm build`;
+3. `npm publish --access public --registry=https://registry.npmjs.org`;
+4. commit `chore: release v<version>` and create the annotated tag;
+5. `git push` and `git push --tags`.
+
+Build and publish run inside bumpp's `--execute` step, before the commit, tag
+and push. If either fails, bumpp aborts and no remote commit or tag is created.
+The working tree keeps the bumped `package.json`; fix the failure, restore or
+re-run the bump, and publish again.
+
+The release workflow triggers on the pushed tag. It re-runs typecheck, tests and
+build, sees the version already on npm, skips the npm publish, and creates the
+GitHub release.
 
 ## Manual fallback
 
-If CI cannot publish, run locally after authenticating to the **public** npm
-registry (the default registry may be a mirror):
+If the scripted publish cannot run, do the same steps by hand:
 
 ```bash
-npm login --registry=https://registry.npmjs.org
-pnpm typecheck
-pnpm test
 pnpm build
-pnpm publish --access public --provenance --registry=https://registry.npmjs.org
+npm publish --access public --registry=https://registry.npmjs.org
+
+git add package.json CHANGELOG.md
+git commit -m "chore: release v<version>"
+git tag -a v<version> -m "v<version>"
+git push
+git push --tags
 ```
 
-Verify the tarball before publishing:
-
-```bash
-pnpm pack --pack-destination /tmp
-tar -tzf /tmp/simon_he-electron-browser-surface-<version>.tgz | head
-```
+Keep the publish before the push. A pushed tag is public and should only point
+at a version that is already available on npm.
 
 ## Version policy
 
-The package follows SemVer. Breaking changes to exported types, error codes,
-CDP fallback behavior or the Electron peer floor require a major version once
-the API is stable. Before 1.0, breaking changes still require a clear Changeset
-and migration note.
+The package follows SemVer. Breaking changes to exported types, error codes, CDP
+fallback behavior or the Electron peer floor require a major version once the
+API is stable. Before 1.0, breaking changes still require a clear changelog note
+and migration guidance.
