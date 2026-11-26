@@ -1,7 +1,13 @@
 # Changelog
 
-All notable changes to this project are documented here. Releases are prepared
-with Changesets and follow Semantic Versioning.
+All notable changes to this project are documented here. Releases follow
+Semantic Versioning and are prepared with `bumpp`.
+
+## 0.2.0
+
+- Keep never-shown surfaces at a positive `1280x800` viewport and add
+  `ViewportEmulationGuard` for clearing agent CDP device-metrics/page-scale
+  overrides before a user-visible surface inherits them.
 
 ## 0.1.0
 

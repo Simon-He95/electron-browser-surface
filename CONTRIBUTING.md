@@ -35,7 +35,7 @@ Keep commits focused. A change to the public API should include:
 - implementation;
 - type/API docs;
 - a regression test;
-- a Changeset entry (`pnpm changeset`).
+- a changelog note for the next release.
 
 ## Pull requests
 
@@ -45,7 +45,7 @@ Before opening a PR:
 2. `pnpm test`
 3. `pnpm build`
 4. describe the user-visible behavior and any platform limitations;
-5. include a Changeset for a user-facing change.
+5. add a changelog note for a user-facing change.
 
 Do not add host-specific application code (Vue stores, product session
 databases, private UI selectors) to the package. Put a host demo or integration
@@ -53,9 +53,9 @@ note under `examples/` or `docs/` instead.
 
 ## Release
 
-Maintainers use Changesets. See [the releasing guide](docs/releasing.md) for the
-version PR, tag and `NPM_TOKEN` setup. A published release must build from a
-clean checkout.
+Maintainers release from a clean checkout with `pnpm release`. See
+[the releasing guide](docs/releasing.md) for the bumpp flow, npm login and tag
+push. A published release must build from a clean checkout.
 
 ## Questions
 
