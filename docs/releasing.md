@@ -11,6 +11,14 @@ The release script publishes from the local machine. The tag push still runs
 the GitHub `release` workflow, which skips the npm publish when the version
 already exists and creates the GitHub release.
 
+If the npm account requires a one-time password, either run
+`npm login --auth-type=web --registry=https://registry.npmjs.org` first or pass
+the current code:
+
+```bash
+NPM_OTP=123456 pnpm release 0.2.0
+```
+
 ## Flow
 
 ```bash
