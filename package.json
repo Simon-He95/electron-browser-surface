@@ -1,6 +1,6 @@
 {
   "name": "@simon_he/electron-browser-surface",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Host-neutral CDP browser automation and a WebContentsView surface for Electron.",
   "keywords": [
     "electron",
