@@ -1,6 +1,9 @@
 import { spawnSync } from 'node:child_process';
 
 const registry = process.env.NPM_REGISTRY ?? 'https://registry.npmjs.org';
+const otp = process.env.NPM_OTP;
+const publishArgs = ['publish', '--access', 'public', `--registry=${registry}`];
+if (otp) publishArgs.push(`--otp=${otp}`);
 
 const run = (command, args) => {
   const result = spawnSync(command, args, { stdio: 'inherit' });
@@ -14,4 +17,4 @@ const run = (command, args) => {
 };
 
 run('pnpm', ['build']);
-run('npm', ['publish', '--access', 'public', `--registry=${registry}`]);
+run('npm', publishArgs);
