@@ -25,9 +25,6 @@ composer.
 
 ## Install
 
-> The repository is public. The first npm release is pending npm credentials;
-> until then, clone the repository and run the demo below.
-
 ```bash
 pnpm add @simon_he/electron-browser-surface
 # Electron is an optional peer:
